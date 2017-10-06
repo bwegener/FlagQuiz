@@ -1,9 +1,12 @@
 package edu.orangecoastcollege.cs273.flagquiz;
 
+import android.content.DialogInterface;
 import android.content.res.AssetManager;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -146,14 +149,20 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // COMPLETED: Shuffle the order of all the countries (use Collections.shuffle)
-        Collections.shuffle(mAllCountriesList);
+        do {
+            Collections.shuffle(mAllCountriesList);
+        }
+        while (mAllCountriesList.subList(0, mButtons.length).contains(mCorrectCountry));
 
-        // TODO: Loop through all 4 buttons, enable them all and set them to the first 4 countries
-        // TODO: in the all countries list
-        int buttonSize =
+        // COMPLETED: Loop through all 4 buttons, enable them all and set them to the first 4 countries in the all countries list
+        for(int i = 0; i < mButtons.length; i++)
+        {
+            mButtons[i].setEnabled(true);
+            mButtons[i].setText(mAllCountriesList.get(i).getName());
+        }
 
-
-        // TODO: After the loop, randomly replace one of the 4 buttons with the name of the correct country
+        // COMPLETED: After the loop, randomly replace one of the 4 buttons with the name of the correct country
+        mButtons[rng.nextInt(mButtons.length)].setText(mCorrectCountry.getName());
 
     }
 
@@ -165,20 +174,59 @@ public class MainActivity extends AppCompatActivity {
      * @param v
      */
     public void makeGuess(View v) {
-        // TODO: Downcast the View v into a Button (since it's one of the 4 buttons)
+        // COMPLETED: Downcast the View v into a Button (since it's one of the 4 buttons)
+        Button clickedButton = (Button) v;
 
-        // TODO: Get the country's name from the text of the button
-        // TODO: If the guess matches the correct country's name, increment the number of correct guesses,
-        // TODO: then display correct answer in green text.  Also, disable all 4 buttons (can't keep guessing once it's correct)
+        // COMPLETED: Get the country's name from the text of the button
+        String guess = clickedButton.getText().toString();
 
-        // TODO: Nested in this decision, if the user has completed all 10 questions, show an AlertDialog
+        // COMPLETED: If the guess matches the correct country's name, increment the number of correct guesses,
+        // COMPLETED: then display correct answer in green text.  Also, disable all 4 buttons (can't keep guessing once it's correct)
+        // COMPLETED: Nested in this decision, if the user has completed all 10 questions, show an AlertDialog
+        // COMPLETED: with the statistics and an option to Reset Quiz
+        // COMPLETED: Else, the answer is incorrect, so display "Incorrect Guess!" in red
+        // COMPLETED: and disable just the incorrect button.
+        mTotalGuesses++;
+        if(guess.equals(mCorrectCountry.getName())) {
+            // Disable all the buttons (don't let user guess again)
+            for(Button b : mButtons)
+                b.setEnabled(false);
+            mCorrectGuesses++;
+            mAnswerTextView.setText(mCorrectCountry.getName());
+            mAnswerTextView.setTextColor(ContextCompat.getColor(this, R.color.correct_answer));
 
-        // TODO: with the statistics and an option to Reset Quiz
-
-        // TODO: Else, the answer is incorrect, so display "Incorrect Guess!" in red
-        // TODO: and disable just the incorrect button.
-
-
+            if(mCorrectGuesses < FLAGS_IN_QUIZ) {
+                // Wait two seconds first then load the next flag
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadNextFlag();
+                    }
+                }, 2000);
+            }
+            else
+            {
+                // Show an AlertDialog
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setMessage(getString(R.string.results, mTotalGuesses, (double) mCorrectGuesses / mTotalGuesses * 100));
+                builder.setPositiveButton(getString(R.string.reset_quiz), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // resetQuiz
+                        resetQuiz();
+                    }
+                });
+                builder.setCancelable(false);
+                builder.create();
+                builder.show();
+            }
+        }
+        else
+        {
+            clickedButton.setEnabled(false);
+            mAnswerTextView.setText(R.string.incorrect_answer);
+            mAnswerTextView.setTextColor(ContextCompat.getColor(this, R.color.incorrect_answer));
+        }
 
     }
 
